@@ -11,22 +11,44 @@
 
 <script>
 function start() {
+  var w = 800;
+  var h = 50;
+  var radius = 20;
+
   var content = d3.select("#divContent");
-  console.log(content);
+  var svg = content.append("svg").attr({
+    "width": w,
+    "height": h
+  }).style({
+    "width": w + "px",
+    "height": h + "px",
+    "border": "black solid 1px"
+  });
 
   d3.json("https://raw.githubusercontent.com/JosuaKrause/d3-tutorial/master/example.json", function(err, data) {
     if(err) {
       console.warn(err);
       return;
     }
-    console.log(data);
     var events = data["events"];
     var times = events.map(function(e) {
       return +e["time"];
     });
-    var xaxis = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, 1]).nice();
+    var xaxis = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, w]).nice();
 
-    console.log(xaxis(+data["start"]), xaxis(+data["end"]));
+    var sel = svg.selectAll("circle.event").data(events, function(e, ix) {
+      return ix;
+    });
+    sel.exit().remove();
+    sel.enter().append("circle").classed("event", true);
+    sel.attr({
+      "cx": function(e) {
+        return xaxis(+e["time"]);
+      },
+      "cy": h * 0.5,
+      "r": radius,
+      "opacity": 0.1
+    });
   });
 }
 
