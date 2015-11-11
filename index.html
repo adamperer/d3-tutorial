@@ -4,6 +4,23 @@
   <title>D3-Tutorial</title>
   <meta charset="utf-8">
   <script src="d3.min.js" charset="utf-8"></script>
+  <style>
+    .axis {
+      shape-rendering: crispEdges;
+    }
+
+    .x.axis line {
+      stroke: #fff;
+    }
+
+    .x.axis .minor {
+      stroke-opacity: .5;
+    }
+
+    .x.axis path {
+      display: none;
+    }
+  </style>
 </head>
 <body onload="start()">
 
@@ -12,8 +29,9 @@
 <script>
 function start() {
   var w = 800;
-  var h = 50;
+  var h = 100;
   var radius = 20;
+  var textHeight = 20;
 
   var content = d3.select("#divContent");
   var svg = content.append("svg").attr({
@@ -32,9 +50,10 @@ function start() {
     }
     var events = data["events"];
     var times = events.map(function(e) {
-      return +e["time"];
+      return new Date(+e["time"] * 1000);
     });
-    var xaxis = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, w]).nice();
+    var xScale = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, w]).nice();
+    var xAxis = d3.svg.axis().scale(xScale).tickSize(-h + textHeight).tickSubdivide(true);
 
     var sel = svg.selectAll("circle.event").data(events, function(e, ix) {
       return ix;
@@ -43,12 +62,19 @@ function start() {
     sel.enter().append("circle").classed("event", true);
     sel.attr({
       "cx": function(e) {
-        return xaxis(+e["time"]);
+        return xScale(new Date(+e["time"] * 1000));
       },
       "cy": h * 0.5,
       "r": radius,
       "opacity": 0.1
     });
+
+    svg.append("g").classed({
+      "x": true,
+      "axis": true
+    }).attr({
+      "transform": "translate(0, " + (h - textHeight) + ")"
+    }).call(xAxis);
   });
 }
 
