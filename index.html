@@ -109,51 +109,49 @@ function start() {
       base.attr("transform", "translate(" + move + ") scale(" + s + ")");
       visScale.range([ move[0] , move[0] + w * s ]);
       visAxis.call(xAxis);
-      sel.selectAll("text.label").attr({
+      label.attr({
         "font-size": 16 / s
       });
     }
 
-    var sel = base.selectAll("g.event").data(events, function(e, ix) {
+    var sel = base.selectAll("circle.event").data(events, function(e, ix) {
       return ix;
     });
     sel.exit().remove();
-    var sele = sel.enter().append("g").classed("event", true);
-    sele.append("circle").classed("dot", true);
-    sele.append("text").classed("label", true);
+    sel.enter().append("circle").classed("event", true);
     sel.attr({
-      "transform": function(e) {
-        var x = xScale(new Date(+e["time"] * 1000));
-        var y = yPos[e['id']];
-        return "translate(" + [ x, y ] + ")";
-      }
-    }).on("mouseover", function(e) {
-      var cur = d3.select(this);
-      cur.selectAll("text.label").attr({
-        "display": null
-      });
-      cur.selectAll("circle.dot").transition().duration(100).attr({
-        "r": 2 * radius
-      });
-    }).on("mouseout", function(e) {
-      var cur = d3.select(this);
-      cur.selectAll("text.label").attr({
-        "display": "none"
-      });
-      cur.selectAll("circle.dot").transition().duration(100).attr({
-        "r": radius
-      });
-    });
-    sel.selectAll("circle.dot").attr({
+      "cx": function(e) {
+        return xScale(new Date(+e["time"] * 1000));
+      },
+      "cy": function(e) {
+        return yPos[e['id']];
+      },
       "r": radius,
       "fill": function(e) {
         return groupScale(e['group']);
       }
+    }).on("mouseover", function(e) {
+      var cur = d3.select(this);
+      cur.transition().duration(100).attr({
+        "r": 2 * radius
+      });
+      label.attr({
+        "display": null,
+        "x": cur.attr("cx"),
+        "y": cur.attr("cy")
+      }).text(e["name"]);
+    }).on("mouseout", function(e) {
+      var cur = d3.select(this);
+      cur.transition().duration(100).attr({
+        "r": radius
+      });
+      label.attr({
+        "display": "none"
+      });
     });
-    sel.selectAll("text.label").attr({
+
+    var label = base.append("text").classed("label", true).attr({
       "display": "none"
-    }).text(function(e) {
-      return e["name"];
     });
   });
 }
