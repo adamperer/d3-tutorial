@@ -20,6 +20,13 @@ function start() {
       return;
     }
     console.log(data);
+    var events = data["events"];
+    var times = events.map(function(e) {
+      return +e["time"];
+    });
+    var xaxis = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, 1]).nice();
+
+    console.log(xaxis(+data["start"]), xaxis(+data["end"]));
   });
 }
 
