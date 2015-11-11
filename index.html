@@ -84,33 +84,9 @@ function start() {
       "border": "black solid 1px"
     });
 
-    var base = svg.append("g").append("g");
-    svg.call(d3.behavior.zoom().scaleExtent([1, 8]).on("zoom", zoom));
-
-    function zoom() {
-      var move = d3.event.translate;
-      var s = d3.event.scale;
-      base.attr("transform", "translate(" + move + ") scale(" + s + ")");
-      visScale.range([ move[0] , move[0] + w * s ]);
-      visAxis.call(xAxis);
-    }
-
-    var sel = base.selectAll("circle.event").data(events, function(e, ix) {
-      return ix;
-    });
-    sel.exit().remove();
-    sel.enter().append("circle").classed("event", true);
-    sel.attr({
-      "cx": function(e) {
-        return xScale(new Date(+e["time"] * 1000));
-      },
-      "cy": function(e) {
-        return yPos[e['id']];
-      },
-      "r": radius,
-      "fill": function(e) {
-        return groupScale(e['group']);
-      }
+    svg.append("rect").classed("overlay", true).attr({
+      "width": w,
+      "height": h + textHeight
     });
 
     var visAxis = svg.append("g").classed({
@@ -120,9 +96,60 @@ function start() {
       "transform": "translate(0, " + h + ")"
     }).call(xAxis);
 
-    svg.append("rect").classed("overlay", true).attr({
-      "width": w,
-      "height": h + textHeight
+    var base = svg.append("g").append("g");
+    svg.call(d3.behavior.zoom().scaleExtent([1, 8]).on("zoom", zoom));
+
+    function zoom() {
+      var move = d3.event.translate;
+      var s = d3.event.scale;
+      base.attr("transform", "translate(" + move + ") scale(" + s + ")");
+      visScale.range([ move[0] , move[0] + w * s ]);
+      visAxis.call(xAxis);
+      sel.selectAll("text.label").attr({
+        "font-size": 16 / s
+      });
+    }
+
+    var sel = base.selectAll("g.event").data(events, function(e, ix) {
+      return ix;
+    });
+    sel.exit().remove();
+    var sele = sel.enter().append("g").classed("event", true);
+    sele.append("circle").classed("dot", true);
+    sele.append("text").classed("label", true);
+    sel.attr({
+      "transform": function(e) {
+        var x = xScale(new Date(+e["time"] * 1000));
+        var y = yPos[e['id']];
+        return "translate(" + [ x, y ] + ")";
+      }
+    }).on("mouseover", function(e) {
+      var cur = d3.select(this);
+      cur.selectAll("text.label").attr({
+        "display": null
+      });
+      cur.selectAll("circle.dot").transition().duration(100).attr({
+        "r": 2 * radius
+      });
+    }).on("mouseout", function(e) {
+      var cur = d3.select(this);
+      cur.selectAll("text.label").attr({
+        "display": "none"
+      });
+      cur.selectAll("circle.dot").transition().duration(100).attr({
+        "r": radius
+      });
+    });
+    sel.selectAll("circle.dot").attr({
+      "r": radius,
+      "fill": function(e) {
+        return groupScale(e['group']);
+      }
+    });
+    sel.selectAll("text.label").attr({
+      "display": "none"
+    }).text(function(e) {
+      return e["name"];
     });
   });
 }
