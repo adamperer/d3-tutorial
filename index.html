@@ -40,7 +40,9 @@ function start() {
       console.warn(err);
       return;
     }
-    var events = data["events"];
+    var events = data["events"].filter(function(e) {
+      return [ "diagnosis", "procedure" ].indexOf(e['group']) >= 0;
+    });
     var types = {};
     var groups = {};
     events.forEach(function(e) {
