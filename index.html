@@ -38,11 +38,19 @@
 <script>
 function start() {
   var w = 800;
+  var h = 600;
   var radius = 2;
   var textHeight = 20;
 
   var content = d3.select("#divContent");
-  var svg = content.append("svg");
+  var svg = content.append("svg").attr({
+    "width": w,
+    "height": h + textHeight
+  }).style({
+    "width": w + "px",
+    "height": (h + textHeight) + "px",
+    "border": "black solid 1px"
+  });
 
   d3.json("https://raw.githubusercontent.com/JosuaKrause/d3-tutorial/master/example.json", function(err, data) {
     if(err) {
@@ -59,11 +67,9 @@ function start() {
       types[e['id']] = Math.min(+e['time'], e['id'] in types ? types[e['id']] : Number.POSITIVE_INFINITY);
     });
     var typeList = Object.keys(types);
-    var numTypes = typeList.length;
     typeList.sort(function(ta, tb) {
       return d3.ascending(types[ta], types[tb]);
     });
-    var h = radius * numTypes;
     var yPos = {};
     typeList.forEach(function(tid, ix) {
       yPos[tid] = h - ix * radius;
@@ -79,15 +85,6 @@ function start() {
 
     var groupScale = d3.scale.category10().domain(Object.keys(groups));
 
-    svg.attr({
-      "width": w,
-      "height": h + textHeight
-    }).style({
-      "width": w + "px",
-      "height": (h + textHeight) + "px",
-      "border": "black solid 1px"
-    });
-
     svg.append("rect").classed("overlay", true).attr({
       "width": w,
       "height": h + textHeight
@@ -101,7 +98,7 @@ function start() {
     }).call(xAxis);
 
     var base = svg.append("g").append("g");
-    svg.call(d3.behavior.zoom().scaleExtent([1, 8]).on("zoom", zoom));
+    svg.call(d3.behavior.zoom().scaleExtent([ 0.5, 8 ]).on("zoom", zoom));
 
     function zoom() {
       var move = d3.event.translate;
