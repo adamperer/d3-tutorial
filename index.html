@@ -49,11 +49,18 @@ function start() {
       return;
     }
     var events = data["events"];
+    var groups = {};
+    events.forEach(function(e) {
+      groups[e['group']] = true;
+    });
     var times = events.map(function(e) {
       return new Date(+e["time"] * 1000);
     });
+
     var xScale = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, w]).nice();
     var xAxis = d3.svg.axis().scale(xScale).tickSize(-h + textHeight).tickSubdivide(true);
+
+    var groupScale = d3.scale.category10().domain(Object.keys(groups));
 
     var sel = svg.selectAll("circle.event").data(events, function(e, ix) {
       return ix;
@@ -64,9 +71,13 @@ function start() {
       "cx": function(e) {
         return xScale(new Date(+e["time"] * 1000));
       },
-      "cy": h * 0.5,
+      "cy": function(e) {
+        return h * 0.5 + ((Math.random() - 0.5) * radius);
+      },
       "r": radius,
-      "opacity": 0.1
+      "fill": function(e) {
+        return groupScale(e['group']);
+      }
     });
 
     svg.append("g").classed({
