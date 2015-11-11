@@ -10,7 +10,7 @@
     }
 
     .x.axis line {
-      stroke: #fff;
+      stroke: lightgray;
     }
 
     .x.axis .minor {
@@ -29,19 +29,11 @@
 <script>
 function start() {
   var w = 800;
-  var h = 100;
-  var radius = 20;
+  var radius = 2;
   var textHeight = 20;
 
   var content = d3.select("#divContent");
-  var svg = content.append("svg").attr({
-    "width": w,
-    "height": h
-  }).style({
-    "width": w + "px",
-    "height": h + "px",
-    "border": "black solid 1px"
-  });
+  var svg = content.append("svg");
 
   d3.json("https://raw.githubusercontent.com/JosuaKrause/d3-tutorial/master/example.json", function(err, data) {
     if(err) {
@@ -49,18 +41,40 @@ function start() {
       return;
     }
     var events = data["events"];
+    var types = {};
     var groups = {};
     events.forEach(function(e) {
       groups[e['group']] = true;
+      types[e['id']] = Math.min(+e['time'], e['id'] in types ? types[e['id']] : Number.POSITIVE_INFINITY);
     });
+    var typeList = Object.keys(types);
+    var numTypes = typeList.length;
+    typeList.sort(function(ta, tb) {
+      return d3.ascending(types[ta], types[tb]);
+    });
+    var h = radius * numTypes;
+    var yPos = {};
+    typeList.forEach(function(tid, ix) {
+      yPos[tid] = h - ix * radius;
+    });
+
     var times = events.map(function(e) {
       return new Date(+e["time"] * 1000);
     });
 
     var xScale = d3.time.scale().domain([ d3.min(times), d3.max(times) ]).range([0, w]).nice();
-    var xAxis = d3.svg.axis().scale(xScale).tickSize(-h + textHeight).tickSubdivide(true);
+    var xAxis = d3.svg.axis().scale(xScale).tickSize(-h).tickSubdivide(true);
 
     var groupScale = d3.scale.category10().domain(Object.keys(groups));
+
+    svg.attr({
+      "width": w,
+      "height": h + textHeight
+    }).style({
+      "width": w + "px",
+      "height": (h + textHeight) + "px",
+      "border": "black solid 1px"
+    });
 
     var sel = svg.selectAll("circle.event").data(events, function(e, ix) {
       return ix;
@@ -72,7 +86,7 @@ function start() {
         return xScale(new Date(+e["time"] * 1000));
       },
       "cy": function(e) {
-        return h * 0.5 + ((Math.random() - 0.5) * radius);
+        return yPos[e['id']];
       },
       "r": radius,
       "fill": function(e) {
@@ -84,7 +98,7 @@ function start() {
       "x": true,
       "axis": true
     }).attr({
-      "transform": "translate(0, " + (h - textHeight) + ")"
+      "transform": "translate(0, " + h + ")"
     }).call(xAxis);
   });
 }
